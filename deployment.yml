@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-api-deployment
+  namespace: portifolio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: back-chat
+  template:
+    metadata:
+      labels:
+        app: back-chat
+    spec:
+      containers:
+        - name: chat-api
+          image: leondeoliveirapedrosa/back-chat:dev
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: DEBUG
+              value: 'true'
+            - name: URL_API
+              value: https://chat-api.leonoliveira.com.br
+            - name: PSQL_HOST
+              value: postgres
+            - name: PSQL_PORT
+              value: '5432'
+            - name: PSQL_USER
+              value: admin
+            - name: PSQL_PASS
+              value: L3on@Nomade
+            - name: PSQL_DB
+              value: chat
+          imagePullPolicy: Always
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-api-service
+  namespace: portifolio
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/websocket-services: "chat-api-service"
+spec:
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  selector:
+    app: back-chat
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-chat-ingress
+  namespace: portifolio
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  tls:
+    - hosts:
+        - chat-api.leonoliveira.com.br
+      secretName: chat-api-tls
+  rules:
+    - host: chat-api.leonoliveira.com.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: chat-api-service
+                port:
+                  number: 8000

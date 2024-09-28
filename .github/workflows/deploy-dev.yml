@@ -1,0 +1,23 @@
+name: Workflow chat api dev
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: vutr
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build the docker image
+        run: docker build -f Dockerfile -t leondeoliveirapedrosa/back-chat:dev .
+      - name: Push the docker image
+        run: docker push leondeoliveirapedrosa/back-chat:dev
+      - name: Remove the docker image
+        run: docker image rm leondeoliveirapedrosa/back-chat:dev
+      - name: Restart container application
+        run: kubectl rollout restart deployment chat-api-deployment -n portifolio
+

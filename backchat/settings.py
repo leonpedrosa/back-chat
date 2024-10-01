@@ -172,3 +172,11 @@ SWAGGER_SETTINGS = {
 
 URL_API = os.environ.get('URL_API', 'http://127.0.0.1:8001')
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}

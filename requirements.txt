@@ -1,5 +1,7 @@
 asgiref==3.8.1
+async-timeout==4.0.3
 channels==4.1.0
+channels-redis==4.2.0
 click==8.1.7
 Django==4.2
 django-cors-headers==4.4.0
@@ -7,10 +9,12 @@ djangorestframework==3.15.2
 drf-yasg==1.21.7
 h11==0.14.0
 inflection==0.5.1
+msgpack==1.1.0
 packaging==24.1
 psycopg2-binary==2.9.9
 pytz==2024.2
 PyYAML==6.0.2
+redis==5.1.0
 sqlparse==0.5.1
 typing_extensions==4.12.2
 uritemplate==4.1.1

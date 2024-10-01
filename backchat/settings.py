@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 import os
 
@@ -16,7 +17,6 @@ SECRET_KEY = 'django-insecure-^8-bku@bxcxp+gc2h*@7q&xxh5q5fcf%g&06-!3&%y2($m)v$a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'false').lower() in ('1', 'true', 'yes', 'y')
 
-print(f'DEBUG: {DEBUG}')
 ALLOWED_HOSTS = ['*']
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework.authtoken',
+    # 'rest_framework.authtoken',
+    'rest_framework_simplejwt',
     'channels',
     'corsheaders',
     'drf_yasg',
@@ -153,13 +154,19 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100,
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication'
+        # 'rest_framework.authentication.TokenAuthentication'
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ]
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),  # Duração do token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Duração do refresh token
 }
 
 SWAGGER_SETTINGS = {
@@ -170,7 +177,7 @@ SWAGGER_SETTINGS = {
     'VALIDATOR_URL': None
 }
 
-URL_API = os.environ.get('URL_API', 'http://127.0.0.1:8001')
+URL_API = os.environ.get('URL_API', 'http://127.0.0.1:8005')
 
 ADDRESS_REDIS = os.environ.get('ADDRESS_REDIS', '127.0.0.1')
 PORT_REDIS = int(os.environ.get('PORT_REDIS', 6379))

@@ -1,6 +1,7 @@
 from channels.generic.websocket import WebsocketConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
+import uuid
 
 
 class HelloConsumer(WebsocketConsumer):
@@ -20,10 +21,19 @@ class AuthConsumer(AsyncWebsocketConsumer):
         user = self.scope.get("user", AnonymousUser())
         if user.is_authenticated:
             await self.accept()
+            self.connect_id = str(uuid.uuid4())
             await self.send(text_data=json.dumps({
-                "message": f"Bem-vindo, {user.username}"
+                "type": "connected",
+                "connection_id": self.connect_id,
+                "user": {
+                    "id": user.id,
+                    "avatar": "https://cdn.quasar.dev/img/avatar1.jpg",
+                    "is_online": True,
+                    "username": user.username
+                }
             }))
         else:
+            # TODO: Realizar login tbm via websocket
             await self.close()
 
     async def disconnect(self, close_code):

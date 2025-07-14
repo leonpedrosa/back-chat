@@ -48,7 +48,6 @@ class AuthViewSet(ViewSet):
         else:
             return Response({'error': 'Invalid credentials'}, status=401)
 
-        token = Auth(username, password).validate_auth()
 
 class UserWithStatusViewSet(ReadOnlyModelViewSet):
     queryset = User.objects.all().order_by('username')

@@ -1,9 +1,10 @@
-from rest_framework.viewsets import GenericViewSet, ViewSet, ModelViewSet
+from rest_framework.viewsets import GenericViewSet, ViewSet, ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.mixins import *
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from api.serializers import *

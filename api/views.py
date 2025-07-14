@@ -49,14 +49,6 @@ class AuthViewSet(ViewSet):
 
         token = Auth(username, password).validate_auth()
 
-        if token:
-            return Response(
-                {
-                    'token': token.key,
-                    'username': username,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name
-                }
-            )
-        else:
-            return Response({'error': 'Invalid credentials'}, status=401)
+class UserWithStatusViewSet(ReadOnlyModelViewSet):
+    queryset = User.objects.all().order_by('username')
+    serializer_class = UserWithStatusSerializer

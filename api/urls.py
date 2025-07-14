@@ -4,4 +4,5 @@ from api.views import *
 
 router = routers.DefaultRouter()
 router.register(r'auth', AuthViewSet, basename='auth')
+router.register(r'user', UserWithStatusViewSet, basename='user')
 urlpatterns = router.urls

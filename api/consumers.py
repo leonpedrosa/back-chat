@@ -31,7 +31,9 @@ class AuthConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # Recupera o usuário da conexão WebSocket
         from django.contrib.auth.models import AnonymousUser
+
         user = self.scope.get("user", AnonymousUser())
+
         if user.is_authenticated:
             await self.accept()
             self.user_id = user.id
@@ -45,6 +47,9 @@ class AuthConsumer(AsyncWebsocketConsumer):
 
             # Envia notificação para os outros
             await self.notify_presence(user.id, True)
+
+            # Adiciona ao grupo pessoal
+            await self.channel_layer.group_add(f"user_{user.id}", self.channel_name)
 
             await self.send(text_data=json.dumps({
                 "type": "connected",
@@ -66,20 +71,64 @@ class AuthConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_discard("presence", self.channel_name)
             # Notificação para outros que o usuário saiu
             await self.notify_presence(self.user_id, False)
+            # Remove do grupo pessoal
+            await self.channel_layer.group_discard(f"user_{self.user_id}", self.channel_name)
 
     async def receive(self, text_data):
         """
         Recebe mensagens do webSocket, trata keepalive e ecoa outras mensagens
         """
+        from api.serializers import MessageSerializer
+        from django.contrib.auth.models import User
+        from django.core.exceptions import ObjectDoesNotExist
+        from api.models import Message
+
         try:
             data = json.loads(text_data)
         except JSONDecodeError:
             data = {}
-        if data.get("type") == "keepalive" and hasattr(self, "user_id"):
+
+        msg_type = data.get("type")
+
+        if msg_type == "keepalive":
             await sync_to_async(mark_online)(self.user_id)
-        else:
+
+        elif msg_type == "chat_message":
+            recipient_id = data.get("to")
+            text = data.get("text")
+
+            # Salvar no banco
+            if recipient_id:
+                try:
+                    recipient = await sync_to_async(User.objects.get)(id=recipient_id)
+                except ObjectDoesNotExist:
+                    await self.send(text_data=json.dumps({
+                        "type": "error",
+                        "message": f"Usu�rio com ID {recipient_id} n�o encontrado."
+                    }))
+
+                    return
+
+            message = await sync_to_async(Message.objects.create)(
+                sender_id=self.user_id,
+                recipient=recipient,
+                text=text
+            )
+            serialized = await sync_to_async(MessageSerializer)(message)
+
+            # Enviar para o destinatario (se online)
+            await self.channel_layer.group_send(
+                f"user_{recipient_id}",
+                {
+                    "type": "chat.message",
+                    "message": serialized.data
+                }
+            )
+
+            # Envia de volta ao remetente (confirmacao de envio)
             await self.send(text_data=json.dumps({
-                "echo": data
+                "type": "chat_message_delivered",
+                "message": serialized.data
             }))
 
     async def notify_presence(self, user_id, is_online):
@@ -97,4 +146,10 @@ class AuthConsumer(AsyncWebsocketConsumer):
             "type": "presence",
             "user_id": event["user_id"],
             "is_online": event["is_online"]
+        }))
+
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "chat_message",
+            "message": event["message"]
         }))

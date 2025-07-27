@@ -52,3 +52,23 @@ class AuthViewSet(ViewSet):
 class UserWithStatusViewSet(ReadOnlyModelViewSet):
     queryset = User.objects.all().order_by('username')
     serializer_class = UserWithStatusSerializer
+
+
+
+class MessageViewSet(ModelViewSet):
+    serializer_class = MessageSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        contact_id = self.request.query_params.get('contact')
+        if contact_id:
+            return Message.objects.filter(
+                sender_id__in=[user.id, contact_id],
+                recipient_id__in=[user.id, contact_id]
+            )
+        return Message.objects.none()
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user)
+

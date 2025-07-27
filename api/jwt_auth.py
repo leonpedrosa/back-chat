@@ -15,7 +15,7 @@ class JWTAuthMiddleware(BaseMiddleware):
             # Extrair token da query string (ex: abc123)
             token = scope.get('query_string', b"").decode()
 
-            if token is None:
+            if token is None or len(token) == 0:
                 scope["user"] = AnonymousUser()
                 return await super().__call__(scope, receive, send)
 
